@@ -1,0 +1,55 @@
+name: "Build and test"
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+    tags:
+      - v*
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Nix Flakes doesn't work on shallow clones
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Install nix
+        uses: cachix/install-nix-action@master
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
+      - name: Build
+        id: build
+        run: |
+          nix bundle --bundler github:miuirussia/nix-portable -o bundle .
+
+      - name: Move latest tag
+        run: |
+          set -x
+
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+
+          git push origin :refs/tags/latest
+          git tag -fa latest -m "Latest pre-release"
+          git push origin latest
+
+      - name: Publish pre-release
+        uses: softprops/action-gh-release@da05d552573ad5aba039eaac05058a918a7bf631
+        with:
+          token: "${{ secrets.GITHUB_TOKEN }}"
+          tag_name: "latest"
+          name: Development build
+          generate_release_notes: true
+          prerelease: true
+          draft: false
+          files: |
+            ./bundle/bin/*
