@@ -10,13 +10,16 @@
 
     nodePackages = import ./nix { inherit pkgs; };
 
-    nodejs-safe = pkgs.runCommand "nodejs-safe" { } ''
+    nodejs-safe = pkgs.runCommand "nodejs-safe" { nativeBuildInputs = [ pkgs.makeWrapper ]; } ''
       mkdir -p $out/bin
       for item in 'corepack' 'npm' 'npx' 'pnpm' 'pnpx' 'yarn' 'yarnpkg';
       do
-        ln -s "${nodePackages.corepack}/lib/node_modules/corepack/dist/$item.js" "$out/bin/$item"
+        makeWrapper "${nodePackages.corepack}/lib/node_modules/corepack/dist/$item.js" "$out/bin/$item" \
+          --prefix PATH : ${pkgs.lib.makeBinPath [ pkgs.nodejs-slim ]} \
+          --prefix PATH : $out/bin
       done
-      ln -s ${pkgs.nodejs-slim}/bin/node $out/bin/node
+      makeWrapper "${pkgs.nodejs-slim}/bin/node" "$out/bin/node" \
+          --prefix PATH : $out/bin
     '';
   in {
     packages.x86_64-linux.nodejs-safe = pkgs.writeShellScriptBin "nodejs-safe" ''
