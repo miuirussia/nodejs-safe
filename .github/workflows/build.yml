@@ -29,7 +29,7 @@ jobs:
       - name: Build
         id: build
         run: |
-          nix bundle --bundler github:miuirussia/nix-portable -o bundle .
+          nix bundle --bundler github:miuirussia/nix-portable -o bundle .#nodejs-safe
 
       - name: Move latest tag
         run: |

@@ -28,7 +28,7 @@
         exit 1
       fi
 
-      PATH=${pkgs.lib.strings.makeBinPath [nodejs-safe]}:PATH
+      export PATH=${pkgs.lib.strings.makeBinPath [nodejs-safe]}:PATH
 
       TOOL="$1"
       shift  # Remove the first argument, leaving only the tool arguments
